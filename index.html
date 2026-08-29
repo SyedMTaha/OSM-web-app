@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Security Asset Map</title>
+
+    <!-- Leaflet CSS -->
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9/dist/leaflet.css"
+    >
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f1f5f9;
+            color: #0f172a;
+        }
+
+        header {
+            background: #0f172a;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        header h1 {
+            margin: 0 0 8px;
+        }
+
+        header p {
+            margin: 0;
+            color: #cbd5e1;
+        }
+
+        .controls {
+            background: white;
+            padding: 15px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .controls label {
+            font-weight: bold;
+        }
+
+        select,
+        button {
+            padding: 10px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        button {
+            background: #0f172a;
+            color: white;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        #map {
+            width: 100%;
+            height: 600px;
+        }
+
+        .info {
+            background: white;
+            padding: 15px 20px;
+            line-height: 1.5;
+        }
+
+        .status {
+            margin-top: 5px;
+            font-size: 14px;
+            color: #475569;
+        }
+
+        @media (max-width: 600px) {
+
+            header {
+                padding: 15px;
+            }
+
+            header h1 {
+                font-size: 22px;
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            select,
+            button {
+                width: 100%;
+            }
+
+            #map {
+                height: 450px;
+            }
+        }
+
+    </style>
+</head>
+
+<body>
+
+    <header>
+
+        <h1>Security Asset Map</h1>
+
+        <p>
+            OpenStreetMap + Leaflet.js
+        </p>
+
+    </header>
+
+
+    <!-- Controls -->
+    <div class="controls">
+
+        <label for="assetSelect">
+            Select Asset:
+        </label>
+
+        <select id="assetSelect">
+            <option value="">
+                -- Select an asset --
+            </option>
+        </select>
+
+        <button id="locateButton">
+            Locate Me
+        </button>
+
+    </div>
+
+
+    <!-- Map -->
+    <div id="map"></div>
+
+
+    <div class="info">
+
+        <strong>Security Map Demo</strong>
+
+        <div class="status" id="statusMessage">
+            Select an asset to move the map to its location.
+        </div>
+
+        <br>
+
+        <strong>Safety Notice:</strong>
+
+        All locations displayed on this map are
+        synthetic demonstration locations. They do not
+        represent real infrastructure, private addresses,
+        or live security targets.
+
+    </div>
+
+
+    <!-- Leaflet JavaScript -->
+
+    <script
+        src="https://unpkg.com/leaflet@1.9/dist/leaflet.js">
+    </script>
+
+
+    <script>
+
+        // ----------------------------------------
+        // Initialize Map
+        // ----------------------------------------
+
+        const map = L.map('map')
+            .setView([33.60, 73.05], 12);
+
+
+        // ----------------------------------------
+        // OpenStreetMap Tile Layer
+        // ----------------------------------------
+
+        L.tileLayer(
+            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+            {
+                maxZoom: 19,
+
+                attribution:
+                    '&copy; OpenStreetMap contributors'
+            }
+        ).addTo(map);
+
+
+        // ----------------------------------------
+        // Synthetic Sample Dataset
+        // ----------------------------------------
+
+        const assets = [
+
+            {
+                name: "Demo Authentication Server",
+                type: "Authentication",
+                status: "Online",
+                risk: "Low",
+                lat: 33.60,
+                lon: 73.05
+            },
+
+            {
+                name: "Sample Security Node",
+                type: "Monitoring",
+                status: "Monitoring",
+                risk: "Medium",
+                lat: 33.63,
+                lon: 73.02
+            },
+
+            {
+                name: "Demo Data Center",
+                type: "Infrastructure",
+                status: "Warning",
+                risk: "High",
+                lat: 33.57,
+                lon: 73.10
+            },
+
+            {
+                name: "Test Monitoring Site",
+                type: "Monitoring",
+                status: "Online",
+                risk: "Low",
+                lat: 33.65,
+                lon: 73.08
+            },
+
+            {
+                name: "Sample API Gateway",
+                type: "Network",
+                status: "Online",
+                risk: "Medium",
+                lat: 33.59,
+                lon: 73.00
+            }
+
+        ];
+
+
+        // ----------------------------------------
+        // Store markers
+        // ----------------------------------------
+
+        const markers = {};
+
+
+        // ----------------------------------------
+        // Add markers from dataset
+        // ----------------------------------------
+
+        assets.forEach(function(asset) {
+
+            const marker = L.marker([
+                asset.lat,
+                asset.lon
+            ])
+            .addTo(map);
+
+
+            marker.bindPopup(`
+                <strong>${asset.name}</strong><br><br>
+
+                <b>Type:</b> ${asset.type}<br>
+
+                <b>Status:</b> ${asset.status}<br>
+
+                <b>Risk:</b> ${asset.risk}<br>
+
+                <b>Coordinates:</b>
+                ${asset.lat}, ${asset.lon}
+            `);
+
+
+            markers[asset.name] = marker;
+
+
+            // Add asset to dropdown
+
+            const option =
+                document.createElement("option");
+
+            option.value = asset.name;
+
+            option.textContent = asset.name;
+
+            document
+                .getElementById("assetSelect")
+                .appendChild(option);
+
+        });
+
+
+        // ----------------------------------------
+        // Dropdown Interaction
+        // ----------------------------------------
+
+        document
+            .getElementById("assetSelect")
+            .addEventListener("change", function() {
+
+                const selected = this.value;
+
+                if (!selected) {
+                    return;
+                }
+
+                const asset =
+                    assets.find(
+                        item => item.name === selected
+                    );
+
+                if (!asset) {
+                    return;
+                }
+
+
+                map.flyTo(
+                    [asset.lat, asset.lon],
+                    15
+                );
+
+
+                markers[asset.name].openPopup();
+
+
+                document
+                    .getElementById("statusMessage")
+                    .textContent =
+                    "Viewing: " + asset.name;
+
+            });
+
+
+        // ----------------------------------------
+        // Locate Me Interaction
+        // ----------------------------------------
+
+        document
+            .getElementById("locateButton")
+            .addEventListener("click", function() {
+
+                if (!navigator.geolocation) {
+
+                    alert(
+                        "Geolocation is not supported by this browser."
+                    );
+
+                    return;
+                }
+
+
+                document
+                    .getElementById("statusMessage")
+                    .textContent =
+                    "Requesting your location...";
+
+
+                navigator.geolocation.getCurrentPosition(
+
+                    function(position) {
+
+                        const lat =
+                            position.coords.latitude;
+
+                        const lon =
+                            position.coords.longitude;
+
+
+                        map.flyTo(
+                            [lat, lon],
+                            15
+                        );
+
+
+                        L.marker([lat, lon])
+                            .addTo(map)
+                            .bindPopup(
+                                "<strong>Your Location</strong><br>" +
+                                "Coordinates: " +
+                                lat.toFixed(5) +
+                                ", " +
+                                lon.toFixed(5)
+                            )
+                            .openPopup();
+
+
+                        document
+                            .getElementById("statusMessage")
+                            .textContent =
+                            "Your location has been displayed.";
+
+                    },
+
+
+                    function(error) {
+
+                        document
+                            .getElementById("statusMessage")
+                            .textContent =
+                            "Unable to access your location.";
+
+                        console.log(error);
+
+                    }
+
+                );
+
+            });
+
+    </script>
+
+</body>
+</html>
